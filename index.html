@@ -901,36 +901,55 @@ contact */
         display.innerHTML = html;
         attachOrderHandler();
     }
+    
 
     // 7. Order Form Handling
-    function attachOrderHandler() {
-        const orderForm = document.getElementById('orderForm');
-        if(!orderForm) return;
-
-        orderForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const resultDiv = document.getElementById('cart-result');
-            resultDiv.innerHTML = "Processing...";
-            
-            fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(Object.fromEntries(new FormData(orderForm)))
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    resultDiv.innerHTML = "<span style='color:green'>Order Sent Successfully!</span>";
-                    cart = {};
-                    saveCart();
-                    updateCartTotal();
-                    setTimeout(() => showSection('home'), 2000);
-                }
-            })
-            .catch(() => { resultDiv.innerHTML = "Error sending order."; });
-        });
+   function attachOrderHandler() {
+    const orderForm = document.getElementById('orderForm');
+    // Useful for debugging: check if the form was actually found
+    if(!orderForm) {
+        console.error("orderForm not found in DOM");
+        return;
     }
 
+    orderForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // FIX: Match the ID "result" from your HTML string
+        const resultDiv = document.getElementById('result');
+        if (resultDiv) resultDiv.innerHTML = "Processing...";
+        
+        const formData = new FormData(orderForm);
+        const object = Object.fromEntries(formData);
+        const json = JSON.stringify(object);
+
+        fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json' 
+            },
+            body: json
+        })
+        .then(async (response) => {
+            let json = await response.json();
+            if (response.status == 200) {
+                resultDiv.innerHTML = "<span style='color:green'>Order Sent Successfully!</span>";
+                cart = {}; // Clear cart
+                if(typeof saveCart === "function") saveCart();
+                if(typeof updateCartTotal === "function") updateCartTotal();
+                setTimeout(() => showSection('home'), 2000);
+            } else {
+                console.log(response);
+                resultDiv.innerHTML = json.message;
+            }
+        })
+        .catch(error => {
+            console.log(error);
+            resultDiv.innerHTML = "Something went wrong!";
+        });
+    });
+}
     // 8. Contact Form Handling
     function initContactForm() {
         const cForm = document.getElementById('form');
