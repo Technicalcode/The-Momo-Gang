@@ -558,7 +558,7 @@ contact */
         <li onclick="showSection('home')">Home</li>
         <li onclick="showSection('about')">About</li>
         <li onclick="showSection('menu')">Menu</li>
-        <li onclick="showSection('cart-page')">Cart <span id="cart-total" class="cart-count">0</span></li>
+        <li onclick="showSection('cart-page')">Cart <span id="cart-total" class="cart-count"><i class="fa fa-shopping-cart"></i></span></li>
     </ul>
 </nav>
 
@@ -726,6 +726,7 @@ contact */
 </footer>
 
 <script>
+    // 1. Food Data Configuration
     const foodData = [
         {"id": 1, "name": "Steamed Momos", "price": 120, "image": "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&w=400&q=80"},
         {"id": 2, "name": "Hot & Sour Soup", "price": 90, "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=400&q=80"},
@@ -737,9 +738,10 @@ contact */
         {"id": 8, "name": "Margherita Pizza", "price": 250, "image": "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=400&q=80"}
     ]; 
 
-    // Load cart from LocalStorage or initialize empty
+    // 2. Global State
     let cart = JSON.parse(localStorage.getItem('foodCart')) || {};
 
+    // 3. Navigation & Section Control
     function toggleMenu() {
         const nav = document.getElementById('navLinks');
         const btn = document.getElementById('hamburgerBtn');
@@ -749,108 +751,95 @@ contact */
 
     function showSection(sectionId) {
         document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-        document.getElementById(sectionId).classList.add('active');
+        const target = document.getElementById(sectionId);
+        if (target) target.classList.add('active');
+        
         document.getElementById('navLinks').classList.remove('active');
         document.getElementById('hamburgerBtn').classList.remove('open');
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
+        
+        if (sectionId === 'cart-page') renderCartPage();
     }
 
-    // --- NEW: Search/Filter Functionality ---
-    function filterMenu(query) {
-        const filtered = foodData.filter(item => 
-            item.name.toLowerCase().includes(query.toLowerCase())
-        );
-        renderMenu(filtered);
-    }
-
+    // 4. Menu Rendering (Add to Cart Only)
     function renderMenu(data = foodData) {
         const menuContainer = document.getElementById('menu-grid');
-        menuContainer.innerHTML = data.map(item => {
-            const inCart = cart[item.id];
-            return `
-                <div class="card" style="animation: fadeIn 0.5s ease;">
-                    <img src="${item.image}" alt="${item.name}" loading="lazy">
-                    <div class="card-content" style="padding:15px;">
-                        <h3 style="margin:5px 0;">${item.name}</h3>
-                        <p style="color:#28a745; font-weight:bold;">₹${item.price}</p>
-                        <div id="controls-${item.id}">
-                            ${inCart ? getQtyControls(item.id) : `<button class="btn-add" onclick="addToCart(${item.id})">Add to Cart</button>`}
-                        </div>
-                    </div>
+        if (!menuContainer) return;
+        
+        menuContainer.innerHTML = data.map(item => `
+            <div class="card" style="animation: fadeIn 0.5s ease;">
+                <img src="${item.image}" alt="${item.name}" loading="lazy">
+                <div class="card-content" style="padding:15px;">
+                    <h3 style="margin:5px 0;">${item.name}</h3>
+                    <p style="color:#28a745; font-weight:bold;">₹${item.price}</p>
+                    <button class="btn-add" onclick="addToCart(${item.id})">Add to Cart</button>
                 </div>
-            `;
-        }).join('');
+            </div>
+        `).join('');
     }
 
-    // --- NEW: Toast Notifications ---
-    function showToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'toast-msg';
-        toast.style = "position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:10px 20px; border-radius:5px; z-index:1000; animation: slideUp 0.3s ease;";
-        toast.innerText = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2500);
-    }
-
-    function addToCart(id) {
-        cart[id] = 1;
-        saveCart();
-        updateUI(id);
-        updateCartTotal();
-        showToast("Added to basket! 🛒");
-    }
+    // 5. Cart Logic
+   function addToCart(id) {
+    cart[id] = (cart[id] || 0) + 1;
+    saveCart();
+    updateCartTotal();
+    
+    showSection('cart-page'); 
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Optional: smooth scroll to top
+    
+    showToast("Added to basket! 🛒");
+}
 
     function changeQty(id, delta) {
-        cart[id] += delta;
-        if (cart[id] <= 0) {
-            delete cart[id];
-            resetButton(id);
-        } else {
-            updateUI(id);
-        }
+    // Fallback to 0 if the id somehow doesn't exist in the cart
+    if (!cart[id]) cart[id] = 0; 
+
+    cart[id] += delta;
+
+    if (cart[id] <= 0) {
+        delete cart[id];
+    }
+
+    saveCart();
+    updateCartTotal();
+    renderCartPage();
+}
+
+    function removeItem(id) {
+    if(confirm("Are you sure you want to remove this item?")) {
+        delete cart[id];
         saveCart();
         updateCartTotal();
+        renderCartPage();
     }
+}
 
     function saveCart() {
         localStorage.setItem('foodCart', JSON.stringify(cart));
     }
 
-    function getQtyControls(id) {
-        return `
-            <div class="quantity-controls">
-                <button class="btn-qty" onclick="changeQty(${id}, -1)">-</button>
-                <span style="margin:0 10px; font-weight:bold;">${cart[id]}</span>
-                <button class="btn-qty" onclick="changeQty(${id}, 1)">+</button>
-            </div>`;
-    }
-
-    function updateUI(id) {
-        const container = document.getElementById(`controls-${id}`);
-        if(container) container.innerHTML = getQtyControls(id);
-    }
-
-    function resetButton(id) {
-        const container = document.getElementById(`controls-${id}`);
-        if(container) container.innerHTML = `<button class="btn-add" onclick="addToCart(${id})">Add to Cart</button>`;
-    }
-
     function updateCartTotal() {
-        const count = Object.values(cart).reduce((s, q) => s + q, 0);
-        const badge = document.getElementById('cart-total');
-        if(badge) {
-            badge.innerText = count;
+    const count = Object.values(cart).reduce((s, q) => s + q, 0);
+    const badge = document.getElementById('cart-total');
+    if (badge) {
+        // Only show the count if it's greater than 0, or keep (0) for clarity
+        badge.innerHTML = `<i class="fa fa-shopping-cart"></i> ${count > 0 ? `(${count})` : '(0)'}`;
+        
+        // Only animate if something was actually added
+        if (count > 0) {
             badge.style.transform = "scale(1.2)";
             setTimeout(() => badge.style.transform = "scale(1)", 200);
         }
-        renderCartPage();
     }
+}
 
+    // 6. Cart Page Rendering
     function renderCartPage() {
         const display = document.getElementById('cart-items-display');
-        const ids = Object.keys(cart);
+        if (!display) return;
         
-        if(ids.length === 0) {
+        const ids = Object.keys(cart);
+        if (ids.length === 0) {
             display.innerHTML = `
                 <div class="empty-cart-container" style="text-align:center; padding:50px;">
                     <img src="https://cdn-icons-png.flaticon.com/512/11329/11329061.png" width="120">
@@ -865,6 +854,7 @@ contact */
 
         let html = ids.map(id => {
             const item = foodData.find(f => f.id == id);
+            if (!item) return "";
             totalAmount += (item.price * cart[id]);
             itemsListString += `${item.name} (x${cart[id]}), `;
             return `
@@ -872,14 +862,19 @@ contact */
                     <img src="${item.image}" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
                     <div style="flex-grow:1;">
                         <h4 style="margin:0;">${item.name}</h4>
-                        <small>₹${item.price} x ${cart[id]}</small>
+                        <div class="quantity-controls" style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                            <button class="btn-qty" onclick="changeQty(${id}, -1)">-</button>
+                            <span style="font-weight:bold;">${cart[id]}</span>
+                            <button class="btn-qty" onclick="changeQty(${id}, 1)">+</button>
+                            <i class="fa fa-trash" style="color:red; margin-left:15px; cursor:pointer;" onclick="removeItem(${id})"></i>
+                        </div>
                     </div>
                     <div style="font-weight:bold">₹${item.price * cart[id]}</div>
                 </div>`;
         }).join('');
 
         html += `
-        <div class="checkout-box" style="margin-top:20px; background:#fff; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); padding:20px;">
+       <div class="checkout-box" style="margin-top:20px; background:#fff; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); padding:20px;">
             <h3 style="margin-top:0;">Complete Your Order</h3>
             <form id="orderForm" style="display: flex; flex-direction: column; gap: 10px;">
                 <input type="hidden" name="access_key" value="2090eab1-196b-4749-bae1-6971e48e55f5">
@@ -903,51 +898,76 @@ contact */
         </div>`;
 
         display.innerHTML = html;
-        attachFormHandler();
+        attachOrderHandler();
     }
 
-    function attachFormHandler() {
-        const form = document.getElementById('orderForm');
-        if(!form) return;
+    // 7. Order Form Handling
+    function attachOrderHandler() {
+        const orderForm = document.getElementById('orderForm');
+        if(!orderForm) return;
 
-        form.addEventListener('submit', function(e) {
+        orderForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const result = document.getElementById('result');
-            result.innerHTML = "Processing...";
+            const resultDiv = document.getElementById('cart-result');
+            resultDiv.innerHTML = "Processing...";
             
-            const formData = new FormData(form);
-            const object = Object.fromEntries(formData);
-
             fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(object)
+                body: JSON.stringify(Object.fromEntries(new FormData(orderForm)))
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    result.innerHTML = "<span style='color:green'>Order Sent Successfully!</span>";
+                    resultDiv.innerHTML = "<span style='color:green'>Order Sent Successfully!</span>";
                     cart = {};
                     saveCart();
                     updateCartTotal();
                     setTimeout(() => showSection('home'), 2000);
                 }
             })
-            .catch(() => { result.innerHTML = "Error sending order."; });
+            .catch(() => { resultDiv.innerHTML = "Error sending order."; });
         });
     }
 
-    // --- Slider Logic ---
-    const bgImages = [
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600",
-        "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1600",
-        "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1600"
-    ];
+    // 8. Contact Form Handling
+    function initContactForm() {
+        const cForm = document.getElementById('form');
+        if (!cForm) return;
 
+        cForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const result = document.createElement('div');
+            result.style.marginTop = "15px";
+            cForm.appendChild(result);
+            result.innerHTML = "Please wait...";
+
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(new FormData(cForm)))
+            })
+            .then(res => res.json())
+            .then(data => {
+                result.innerHTML = data.success ? "Message sent successfully!" : "Something went wrong!";
+                result.style.color = data.success ? "green" : "red";
+                if(data.success) cForm.reset();
+                setTimeout(() => result.remove(), 3000);
+            });
+        });
+    }
+
+    // 9. Slider Logic
     function initSliders() {
         const bgContainer = document.getElementById('bg-slider-container');
         const foodSlider = document.getElementById('home-slider');
         if(!bgContainer || !foodSlider) return;
+
+        const bgImages = [
+            "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600",
+            "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1600",
+            "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1600"
+        ];
 
         bgContainer.innerHTML = bgImages.map((img, i) => 
             `<div class="bg-slide ${i === 0 ? 'active' : ''}" style="background-image: url('${img}')"></div>`
@@ -956,7 +976,7 @@ contact */
         foodSlider.innerHTML = foodData.slice(0, 5).map((item, i) => `
             <div class="slide-item ${i === 0 ? 'active' : ''}">
                 <img src="${item.image}" alt="${item.name}">
-                <h3 style="color: #ff9f1c; font-size: 1.8rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">${item.name}</h3>
+                <h3 style="color: #ff9f1c; font-size: 1.8rem;">${item.name}</h3>
                 <button class="btn-add" onclick="showSection('menu')">Order Now</button>
             </div>
         `).join('');
@@ -966,7 +986,6 @@ contact */
             const bgs = document.querySelectorAll('.bg-slide');
             const slides = document.querySelectorAll('.slide-item');
             if(!bgs.length) return;
-
             bgs[current].classList.remove('active');
             slides[current].classList.remove('active');
             current = (current + 1) % bgs.length;
@@ -975,77 +994,34 @@ contact */
         }, 4000);
     }
 
+    // 10. Utils
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.style = "position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:10px 20px; border-radius:5px; z-index:2000; animation: slideUp 0.3s ease;";
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
+
+    // Initialize on Load
     window.addEventListener('load', () => {
         renderMenu();
         updateCartTotal();
         initSliders();
-    });
+        initContactForm();
 
+        // Contact animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('appear');
+            });
+        }, { threshold: 0.1 });
 
-
-    // contact
-    const observerOptions = { threshold: 0.1 };
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('appear');
-        }
-    });
-}, observerOptions);
-
-// Add 'fade-in' class to your items in HTML
-document.querySelectorAll('.item, .form-group, .btn-submit').forEach(el => {
-    el.classList.add('fade-in');
-    observer.observe(el);
-});
-
-
-// contact form
-const form = document.getElementById('form');
-const result = document.createElement('div'); // To show success/error message
-result.style.marginTop = "15px";
-form.appendChild(result);
-
-form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const object = Object.fromEntries(formData);
-    const json = JSON.stringify(object);
-
-    result.innerHTML = "Please wait...";
-
-    fetch('https://api.web3forms.com/submit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: json
-        })
-        .then(async (response) => {
-            let jsonResponse = await response.json();
-            if (response.status == 200) {
-                result.innerHTML = "Message sent successfully!";
-                result.style.color = "green";
-                form.reset(); // Clear the form fields
-            } else {
-                console.log(response);
-                result.innerHTML = jsonResponse.message;
-                result.style.color = "red";
-            }
-        })
-        .catch(error => {
-            console.log(error);
-            result.innerHTML = "Something went wrong!";
-            result.style.color = "red";
-        })
-        .then(function() {
-            // Optional: Hide the message after 3 seconds
-            setTimeout(() => {
-                result.innerHTML = "";
-            }, 3000);
+        document.querySelectorAll('.item, .form-group, .btn-submit').forEach(el => {
+            el.classList.add('fade-in');
+            observer.observe(el);
         });
-});
+    });
 </script>
 </body>
 </html>
