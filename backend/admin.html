@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4f46e5; --danger: #ef4444; --success: #22c55e; --dark: #1e293b; }
+        body { font-family: 'Poppins', sans-serif; background: #f8fafc; margin: 0; padding: 40px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        h2 { color: var(--dark); text-align: center; margin-bottom: 30px; }
+        
+        /* Form Styling */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; background: #f1f5f9; padding: 20px; border-radius: 8px; }
+        input { padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
+        button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-add { background: var(--primary); color: white; width: 100%; }
+        .btn-add:hover { background: #4338ca; }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f1f5f9; text-align: left; padding: 15px; color: var(--dark); }
+        td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .food-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        
+        .actions button { padding: 6px 12px; margin-right: 5px; font-size: 13px; }
+        .btn-edit { background: #fbbf24; color: white; }
+        .btn-delete { background: var(--danger); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🍔 Food Admin Panel</h2>
+
+    <div class="form-grid">
+        <input type="hidden" id="foodId">
+        <input type="text" id="name" placeholder="Food Name">
+        <input type="number" id="price" placeholder="Price (₹)">
+        <input type="text" id="imageurl" placeholder="Image URL">
+        <button onclick="saveFood()" id="saveBtn" class="btn-add">Add Food Item</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="foodTableBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const apiBase = "http://localhost:5000/api";
+
+    // 1. Data Load Karna
+    async function loadFood() {
+        const res = await fetch(`${apiBase}/food`);
+        const data = await res.json();
+        const tableBody = document.getElementById('foodTableBody');
+        tableBody.innerHTML = '';
+
+        data.forEach(item => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td><img src="${item.image}" class="food-img" onerror="this.src='https://via.placeholder.com/60'"></td>
+                    <td><b>${item.name}</b></td>
+                    <td>₹${item.price}</td>
+                    <td class="actions">
+                        <button class="btn-edit" onclick="editMode('${item._id}', '${item.name}', '${item.price}', '${item.image}')">Edit</button>
+                        <button class="btn-delete" onclick="deleteItem('${item._id}')">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 2. Create or Update
+    async function saveFood() {
+        const id = document.getElementById('foodId').value;
+        const payload = {
+            name: document.getElementById('name').value,
+            price: document.getElementById('price').value,
+            image: document.getElementById('imageurl').value
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${apiBase}/food/${id}` : `${apiBase}/Addfood`;
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            alert(id ? "Updated!" : "Added!");
+            resetForm();
+            loadFood();
+        }
+    }
+
+    // 3. Delete
+    async function deleteItem(id) {
+        if (confirm("Delete karna hai?")) {
+            await fetch(`${apiBase}/food/${id}`, { method: 'DELETE' });
+            loadFood();
+        }
+    }
+
+    // 4. Edit mode set karna
+    function editMode(id, name, price, img) {
+        document.getElementById('foodId').value = id;
+        document.getElementById('name').value = name;
+        document.getElementById('price').value = price;
+        document.getElementById('imageurl').value = img;
+        document.getElementById('saveBtn').innerText = "Update Food Item";
+        document.getElementById('saveBtn').style.background = "#fbbf24";
+    }
+
+    function resetForm() {
+        document.getElementById('foodId').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('imageurl').value = '';
+        document.getElementById('saveBtn').innerText = "Add Food Item";
+        document.getElementById('saveBtn').style.background = "#4f46e5";
+    }
+
+    window.onload = loadFood;
+</script>
+
+</body>
+</html>
