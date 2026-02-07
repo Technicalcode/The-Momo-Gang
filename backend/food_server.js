@@ -6,8 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://127.0.0.1:27017/foodAppp')
-  .then(() => console.log("✅ Connected to Database"))
+// MongoDB Atlas Connection String
+const atlasUri = "mongodb+srv://viratbadriwaldancer_db_user:HffWrpJrx4t5WPID@cluster0.uxrtnzl.mongodb.net/foodAppp?retryWrites=true&w=majority";
+
+mongoose.connect(atlasUri)
+  .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch(err => console.error("❌ Connection error:", err));
 
 const FoodSchema = new mongoose.Schema({
@@ -18,7 +21,7 @@ const FoodSchema = new mongoose.Schema({
 
 const Food = mongoose.model('foodItem', FoodSchema, 'foodItem');
 
-// 1. READ: Saare items mangwana
+// 1. READ: Get all items
 app.get('/api/food', async (req, res) => {
     try {
         const dishes = await Food.find();
@@ -28,7 +31,7 @@ app.get('/api/food', async (req, res) => {
     }
 });
 
-// 2. CREATE: Naya item add karna
+// 2. CREATE: Add new item
 app.post('/api/Addfood', async (req, res) => {
     try {
         const newDish = new Food(req.body);
@@ -39,7 +42,7 @@ app.post('/api/Addfood', async (req, res) => {
     }
 });
 
-// 3. UPDATE: Purane item ko edit karna
+// 3. UPDATE: Edit item
 app.put('/api/food/:id', async (req, res) => {
     try {
         await Food.findByIdAndUpdate(req.params.id, req.body);
@@ -49,7 +52,7 @@ app.put('/api/food/:id', async (req, res) => {
     }
 });
 
-// 4. DELETE: Item hatana
+// 4. DELETE: Remove item
 app.delete('/api/food/:id', async (req, res) => {
     try {
         await Food.findByIdAndDelete(req.params.id);
