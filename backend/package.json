@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node food_server.js",
-  "dev": "nodemon food_server.js"
+    "dev": "nodemon food_server.js"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +13,7 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "mongoose": "^9.1.5"
   },
