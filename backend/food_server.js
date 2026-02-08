@@ -7,9 +7,9 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Atlas Connection String
-const atlasUri = "mongodb+srv://viratbadriwaldancer_db_user:HffWrpJrx4t5WPID@cluster0.uxrtnzl.mongodb.net/foodAppp?retryWrites=true&w=majority";
+const MONGO_URI = "mongodb+srv://viratbadriwaldancer_db_user:HffWrpJrx4t5WPID@cluster0.uxrtnzl.mongodb.net/foodAppp?retryWrites=true&w=majority";
 
-mongoose.connect(atlasUri)
+mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch(err => console.error("❌ Connection error:", err));
 
