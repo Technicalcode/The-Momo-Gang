@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const API_URL = "https://the-momo-gang.onrender.com/api/food"; 
+// 👆 localhost ki jagah apna Render URL yahan dalein
 
 const app = express();
 app.use(cors());
