@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 // const API_URI= "https://the-momo-gang.onrender.com/api/food"; 
 // 👆 localhost ki jagah apna Render URL yahan dalein
+// https://the-momo-gang-mson.vercel.app
 
 const app = express();
 app.use(cors());

@@ -734,7 +734,7 @@ contact */
     async function fetchFoodItems() {
         try {
             // Updated to fetch from your backend
-            const response = await fetch('http://localhost:5000/api/food');
+            const response = await fetch('https://the-momo-gang-mson.vercel.app/api/food');
             if (!response.ok) throw new Error("Failed to fetch food");
             
             foodData = await response.json();
