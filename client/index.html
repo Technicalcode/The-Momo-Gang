@@ -944,7 +944,7 @@ contact */
     // 8. Contact & Sliders Initialization
     function initContactForm() { /* Existing code... */ }
 
-    function initSliders() {
+   function initSliders() {
         const bgContainer = document.getElementById('bg-slider-container');
         const foodSlider = document.getElementById('home-slider');
         if(!bgContainer || !foodSlider || foodData.length === 0) return;
@@ -967,7 +967,23 @@ contact */
             </div>
         `).join('');
 
-        // Slider interval logic...
+        // --- 3 Second Rotation Logic ---
+        let currentSlide = 0;
+        const bgs = bgContainer.querySelectorAll('.bg-slide');
+        const foods = foodSlider.querySelectorAll('.slide-item');
+
+        setInterval(() => {
+            // Purani active classes hatayein
+            bgs[currentSlide].classList.remove('active');
+            foods[currentSlide].classList.remove('active');
+
+            // Agla index (0, 1, 2, then back to 0)
+            currentSlide = (currentSlide + 1) % bgs.length;
+
+            // Nayi active classes lagayein
+            bgs[currentSlide].classList.add('active');
+            foods[currentSlide].classList.add('active');
+        }, 3000); // 3000ms = 3 Seconds
     }
 
     function showToast(message) { /* Existing code... */ }
